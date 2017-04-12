@@ -9,7 +9,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"statsconsultant/models"
+	"github.com/raubreywhite/commander_backend/models"
 )
 
 type (

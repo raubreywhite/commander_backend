@@ -13,10 +13,10 @@ import (
 	// Third party packages
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
-	"statsconsultant/controllers"
+	"github.com/raubreywhite/commander_backend/controllers"
+	"github.com/raubreywhite/commander_backend/models"
 
 	"gopkg.in/mgo.v2/bson"
-	"statsconsultant/models"
 	"github.com/rs/cors"
 
 )
