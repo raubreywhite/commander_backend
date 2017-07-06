@@ -5,17 +5,6 @@ import (
 )
 
 type (
-	// User represents the structure of our resource
-	User struct {
-		Id     bson.ObjectId `json:"id" bson:"_id"`
-		Session     string `json:"session" bson:"session"`
-		Email  string        `json:"email" bson:"email"`
-		Name   string        `json:"name" bson:"name"`
-		Password    string           `json:"password" bson:"password"`
-		Projects    []bson.ObjectId           `json:"projects" bson:"projects"`
-		Success bool `json:"success" bson:"success"`
-		LoggedIn bool `json:"loggedin" bson:"loggedin"`
-	}
 
 	UserSession struct {
 		Id     bson.ObjectId `json:"id" bson:"_id"`
@@ -23,16 +12,7 @@ type (
 		Success bool `json:"success"`
 	}
 
-	Project struct {
-		Id     bson.ObjectId `json:"id" bson:"_id"`
-		Session     string `json:"session" bson:"session"`
-		Name   string        `json:"name" bson:"name"`
-		Client   string        `json:"client" bson:"client"`
-		Entries    []bson.ObjectId           `json:"entires" bson:"entries"`
-	}
-
 	Entry struct {
-		Id     bson.ObjectId `json:"id" bson:"_id"`
 		Session     string `json:"session" bson:"session"`
 		Status   string        `json:"status" bson:"status"`
 		Rate   int        `json:"rate" bson:"rate"`
@@ -50,4 +30,36 @@ type (
 		Subcategory   string        `json:"Subcategory" bson:"Subcategory"`
 		Info   string        `json:"name" bson:"name"`
 	}
+
+  Bill struct {
+		Year int `json:"year" bson:"year"`
+		Month int `json:"month" bson:"month"`
+		Billed string `json:"billed" bson:"billed"`
+		MoneyBilled int `json:"moneybilled" bson:"moneybilled"`
+		MoneyReceived int `json:"moneyreceived" bson:"moneyreceived"`
+	}
+
+  Project struct {
+		Name   string        `json:"name" bson:"name"`
+		Entries    []Entry           `json:"entries" bson:"entries"`
+	}
+
+  Client struct {
+    Name   string        `json:"name" bson:"name"`
+    Bills []Bill `json:"bills" bson:"bills"`
+    Projects    []Project           `json:"projects" bson:"projects"`
+  }
+
+  // User represents the structure of our resource
+	User struct {
+		Id     bson.ObjectId `json:"id" bson:"_id"`
+		Session     string `json:"session" bson:"session"`
+		Email  string        `json:"email" bson:"email"`
+		Name   string        `json:"name" bson:"name"`
+    Clients    []Client           `json:"clients" bson:"clients"`
+		Password    string           `json:"password" bson:"password"`
+		Success bool `json:"success" bson:"success"`
+		LoggedIn bool `json:"loggedin" bson:"loggedin"`
+	}
+
 )

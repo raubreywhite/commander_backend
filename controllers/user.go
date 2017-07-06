@@ -96,40 +96,37 @@ func (uc UserController) Login(w http.ResponseWriter, r *http.Request, p httprou
 func (uc UserController) Create(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 
 // Stub an user to be populated from the body
-structU := models.User{}
-structP := models.Project{}
-structE := models.Entry{}
+
+tempBills := []models.Bill{models.Bill{}}
+tempProjects := []models.Project{models.Project{Name: "A project"}}
+tempClient := models.Client{Name: "A client", Projects: tempProjects, Bills: tempBills}
+tempClients := []models.Client{tempClient}
+structU := models.User{Clients: tempClients}
 
 id := bson.NewObjectId()
-var f interface{}
 
-// Populate the user data
-structType := p.ByName("type")
-if(structType=="users"){
 json.NewDecoder(r.Body).Decode(&structU)
-structU.Id = id
-f = structU
-} else if(structType=="projects"){
-json.NewDecoder(r.Body).Decode(&structP)
-structP.Id = id
-fmt.Println(structP)
-f = structP
-} else if(structType=="entries"){
-json.NewDecoder(r.Body).Decode(&structE)
-structE.Id = id
-f = structE
+if err := uc.session.DB("go_rest_tutorial").C("users").Find(bson.M{"email": structU.Email}).One(&structU); err == nil {
+	fmt.Println("EMAIL EXISTS")
+	structU = models.User{Success:false, LoggedIn:false}
+} else if structU.Email=="" {
+	fmt.Println("NO EMAIL")
+	structU = models.User{Success:false, LoggedIn:false}
+} else {
+	structU.Id = id
+
+	structType := p.ByName("type")
+
+	fmt.Println(structU)
+
+	// Write the user to mongo
+	err := uc.session.DB("go_rest_tutorial").C(structType).Insert(structU)
+	if err != nil {
+	fmt.Println(err)
+	}
 }
-
-fmt.Println(f)
-
-// Write the user to mongo
-err := uc.session.DB("go_rest_tutorial").C(structType).Insert(f)
-if err != nil {
-fmt.Println(err)
-}
-
 // Marshal provided interface into JSON structure
-uj, _ := json.Marshal(f)
+uj, _ := json.Marshal(structU)
 
 // Write content-type, statuscode, payload
 w.Header().Set("Content-Type", "application/json")
@@ -142,27 +139,17 @@ func (uc UserController) Edit(w http.ResponseWriter, r *http.Request, p httprout
 
 // Stub an user to be populated from the body
 structU := models.User{}
-structP := models.Project{}
-structE := models.Entry{}
 
 id := bson.NewObjectId()
 var f interface{}
 
 // Populate the user data
 structType := p.ByName("type")
-if(structType=="users"){
+
 json.NewDecoder(r.Body).Decode(&structU)
 id = structU.Id
 f = structU
-} else if(structType=="projects"){
-json.NewDecoder(r.Body).Decode(&structP)
-id = structP.Id
-f = structP
-} else if(structType=="entries"){
-json.NewDecoder(r.Body).Decode(&structE)
-id = structE.Id
-f = structE
-}
+
 fmt.Println(id)
 change := mgo.Change{
 Update: f,
@@ -217,8 +204,6 @@ func (uc UserController) Get(w http.ResponseWriter, r *http.Request, p httproute
 
 // Stub an user to be populated from the body
 structU := models.User{}
-structP := models.Project{}
-structE := models.Entry{}
 
 //id := bson.NewObjectId()
 var f interface{}
@@ -232,20 +217,6 @@ json.NewDecoder(r.Body).Decode(&structU)
 		return
 	}
 f = structU
-} else if(structType=="projects"){
-json.NewDecoder(r.Body).Decode(&structP)
-	if err := uc.session.DB("go_rest_tutorial").C(structType).FindId(structP.Id).One(&structP); err != nil {
-		w.WriteHeader(404)
-		return
-	}
-f = structP
-} else if(structType=="entries"){
-json.NewDecoder(r.Body).Decode(&structE)
-	if err := uc.session.DB("go_rest_tutorial").C(structType).FindId(structE.Id).One(&structE); err != nil {
-		w.WriteHeader(404)
-		return
-	}
-f = structE
 }
 
 // Marshal provided interface into JSON structure

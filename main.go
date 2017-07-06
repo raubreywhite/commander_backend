@@ -8,21 +8,34 @@ import (
 	// Standard library packages
 	"fmt"
 	"net/http"
-	"os"
+  "log"
 
 	// Third party packages
+  "github.com/kardianos/service"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"github.com/raubreywhite/commander_backend/controllers"
-	"github.com/raubreywhite/commander_backend/models"
-
-	"gopkg.in/mgo.v2/bson"
 	"github.com/rs/cors"
 
 )
 
-func main() {
 
+var logger service.Logger
+
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	// Start should not block. Do the actual work async.
+  if service.Interactive() {
+		logger.Info("Running in terminal.")
+	} else {
+		logger.Info("Running under service manager.")
+	}
+
+	go p.run()
+	return nil
+}
+func (p *program) run() {
 	// Instantiate a new router
 	r := httprouter.New()
 
@@ -30,13 +43,6 @@ func main() {
 	session := getSession()
 	uc := controllers.NewUserController(session)
 	defer session.Close()
-
-
-u := models.User{Id: bson.NewObjectId(), Email: "r@rwhite.no", Password: "hello"}
-err := session.DB("go_rest_tutorial").C("users").Insert(u)
-fmt.Println(err)
-fmt.Println(u)
-
 
 	// login
 	r.POST("/login", uc.Login)
@@ -49,24 +55,6 @@ fmt.Println(u)
 
 	r.POST("/get/:type", uc.Get)
 
-	// Get a user resource
-	r.GET("/user/:id", uc.GetUser)
-
-	// Create a new user
-	r.POST("/user", uc.CreateUser)
-
-	// Remove an existing user
-	r.DELETE("/user/:id", uc.RemoveUser)
-
-	// Create a new project
-	r.POST("/createproject", uc.CreateProject)
-
-// Edit a project
-r.POST("/editproject", uc.EditProject)
-
-// Get a project
-r.POST("/getproject", uc.GetProject)
-
 	c := cors.New(cors.Options{
 		AllowedMethods: []string{"GET","POST","PUT","DELETE","OPTIONS"},
 		AllowedHeaders: []string{"*"},
@@ -76,14 +64,39 @@ r.POST("/getproject", uc.GetProject)
 	// Fire up the server
 	http.ListenAndServe(":8080", c.Handler(r))
 }
+func (p *program) Stop(s service.Service) error {
+	// Stop should not block. Return with a few seconds.
+  logger.Info("I'm Stopping!")
+	return nil
+}
+
+func main() {
+  svcConfig := &service.Config{
+		Name:        "GoServiceTest",
+		DisplayName: "Go Service Test",
+		Description: "This is a test Go service.",
+	}
+
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger, err = s.Logger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = s.Run()
+	if err != nil {
+		logger.Error(err)
+	}
+}
 
 // getSession creates a new mongo session and panics if connection error occurs
 func getSession() *mgo.Session {
 	// Connect to our local mongo
-	ip := "mongodb://localhost"
-	if os.Getenv("HOSTIP") != "" {
-		ip = "mongodb://" + os.Getenv("HOSTIP")
-	}
+	ip := "mongodb://mongo"
+
 	fmt.Println(ip)
 
 	s, err := mgo.Dial(ip)
